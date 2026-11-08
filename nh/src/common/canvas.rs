@@ -1637,18 +1637,33 @@ impl NHCanvas for UiCanvas {
                     );
                 }
 
+                let font_id = egui::FontId::proportional(Self::HEADER_TEXT_SIZE);
+                let text_size = self
+                    .left_header_painter
+                    .text(
+                        egui::Pos2::ZERO,
+                        egui::Align2::LEFT_BOTTOM,
+                        text,
+                        font_id.clone(),
+                        egui::Color32::TRANSPARENT,
+                    )
+                    .size();
                 let p = egui::Pos2::new(
                     self.canvas.min.x + row_offset,
                     screen_rect.y_range().center(),
                 );
                 let galley = self.left_header_painter.layout_no_wrap(
                     text.to_string(),
-                    egui::FontId::proportional(Self::HEADER_TEXT_SIZE),
+                    font_id,
                     egui::Color32::BLACK,
                 );
                 self.left_header_painter.add(
-                    egui::epaint::TextShape::new(p, galley, egui::Color32::BLACK)
-                        .with_angle(std::f32::consts::PI * 3.0 / 2.0),
+                    egui::epaint::TextShape::new(
+                        p + (0.0, text_size.x / 2.0).into(),
+                        galley,
+                        egui::Color32::BLACK,
+                    )
+                    .with_angle(std::f32::consts::PI * 3.0 / 2.0),
                 );
 
                 if self.vertical_header != HeaderMode::Compact {

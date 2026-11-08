@@ -469,13 +469,16 @@ impl DiagramAdapter<BpmnDomain> for BpmnDiagramAdapter {
     }
     fn requested_headers(
         &self,
-        _settings: &BpmnSettings,
+        settings: &BpmnSettings,
         (_, last_v): (u8, u8),
     ) -> (canvas::HeaderMode, canvas::HeaderMode) {
-        (
-            canvas::HeaderMode::Expanding(0),
-            canvas::HeaderMode::Expanding(last_v.clamp(1, 5)),
-        )
+        let v = match settings.vertical_header {
+            e @ (canvas::HeaderMode::Expanding(0) | canvas::HeaderMode::Compact) => e,
+            canvas::HeaderMode::Expanding(max) => {
+                canvas::HeaderMode::Expanding(last_v.clamp(1, max))
+            }
+        };
+        (canvas::HeaderMode::Expanding(0), v)
     }
     fn show_view_props_fun(
         &mut self,
@@ -898,6 +901,7 @@ pub struct BpmnSettings {
     nonfinal_buttons: Vec<Vec<(&'static str, &'static ElementButtonF)>>,
     messageable_buttons: Vec<Vec<(&'static str, &'static ElementButtonF)>>,
     associable_buttons: Vec<Vec<(&'static str, &'static ElementButtonF)>>,
+    vertical_header: canvas::HeaderMode,
 }
 
 impl DiagramSettings for BpmnSettings {
@@ -1236,6 +1240,19 @@ impl DiagramSettings for BpmnSettings {
             });
         }
 
+        ui.label("Vertical header style:");
+        egui::ComboBox::from_id_salt("vertical header style")
+            .selected_text(self.vertical_header.as_str())
+            .show_ui(ui, |ui| {
+                for e in [
+                    canvas::HeaderMode::Expanding(0),
+                    canvas::HeaderMode::Compact,
+                    canvas::HeaderMode::Expanding(u8::MAX),
+                ] {
+                    ui.selectable_value(&mut self.vertical_header, e, e.as_str());
+                }
+            });
+
         self.show_reduced(gdc, ui);
 
         ret
@@ -1248,6 +1265,7 @@ impl DiagramSettings for BpmnSettings {
             nonfinal_buttons: Vec::new(),
             messageable_buttons: Vec::new(),
             associable_buttons: Vec::new(),
+            vertical_header: canvas::HeaderMode::Compact,
         })
     }
 
@@ -1263,6 +1281,10 @@ impl DiagramSettings for BpmnSettings {
         table.insert(
             "palette".to_owned(),
             self.palette.read().unwrap().serialize()?,
+        );
+        table.insert(
+            "vertical_header".to_owned(),
+            toml::Value::try_from(self.vertical_header).map_err(|_| ())?,
         );
         Ok(table.into())
     }
@@ -1597,6 +1619,7 @@ pub fn default_settings() -> Box<dyn DiagramSettings> {
         nonfinal_buttons: buttons::NONFINAL_BUTTONS.clone(),
         messageable_buttons: buttons::MESSAGEABLE_BUTTONS.clone(),
         associable_buttons: buttons::ASSOCIABLE_BUTTONS.clone(),
+        vertical_header: canvas::HeaderMode::Compact,
     })
 }
 
@@ -1832,6 +1855,11 @@ pub fn settings_deserializer(value: toml::Value) -> Result<Box<dyn DiagramSettin
         nonfinal_buttons: buttons::NONFINAL_BUTTONS.clone(),
         messageable_buttons: buttons::MESSAGEABLE_BUTTONS.clone(),
         associable_buttons: buttons::ASSOCIABLE_BUTTONS.clone(),
+        vertical_header: value
+            .get("vertical_header")
+            .cloned()
+            .ok_or(())
+            .and_then(|e| e.try_into().map_err(|_| ()))?,
     }))
 }
 
@@ -3971,6 +3999,20 @@ impl ElementControllerGen2<BpmnDomain> for BpmnPoolView {
         }
         self.bounds_rect = r;
 
+        // Draw buttons
+        if let Some(ui_scale) = canvas
+            .ui_scale()
+            .filter(|_| self.temporaries.highlight.selected)
+        {
+            draw_button_rects(
+                settings,
+                canvas,
+                self.bounds_rect.right_top(),
+                ui_scale,
+                &self.model.clone().into(),
+            );
+        }
+
         match child_targetting_drawn {
             false => TargettingStatus::NotDrawn,
             true => TargettingStatus::Drawn,
@@ -4043,20 +4085,42 @@ impl ElementControllerGen2<BpmnDomain> for BpmnPoolView {
             >,
         >,
     ) -> EventHandlingStatus {
-        match event {
-            InputEvent::Click(pos) => {
-                let k_status = self
-                    .swimlane_views
-                    .iter()
-                    .map(|e| {
-                        let mut w = e.write();
-                        (
-                            *w.uuid,
-                            w.handle_event(event, ehc, settings, q, tool, commands),
-                        )
-                    })
-                    .find(|e| e.1 != EventHandlingStatus::NotHandled);
+        let k_status = self
+            .swimlane_views
+            .iter()
+            .map(|e| {
+                let mut w = e.write();
+                (
+                    *w.uuid,
+                    w.handle_event(event, ehc, settings, q, tool, commands),
+                )
+            })
+            .find(|e| e.1 != EventHandlingStatus::NotHandled);
 
+        match event {
+            InputEvent::Click(pos)
+                if k_status.is_none()
+                    && self.temporaries.highlight.selected
+                    && let Some((initial_stage, current_stage, result, event_lock)) =
+                        handle_button_click(
+                            settings,
+                            self.bounds_rect.right_top(),
+                            ehc.ui_scale,
+                            pos,
+                            self.model.clone().into(),
+                        ) =>
+            {
+                *tool = Some(NaiveBpmnTool {
+                    uuid: uuid::Uuid::nil(),
+                    initial_stage,
+                    current_stage,
+                    result,
+                    event_lock,
+                    is_spent: Some(false),
+                });
+                EventHandlingStatus::HandledByContainer
+            }
+            InputEvent::Click(pos) => {
                 if let Some(tool) = tool.as_mut().filter(|_| self.bounds_rect.contains(pos)) {
                     tool.add_section(self.model().into());
                 }
@@ -4099,22 +4163,9 @@ impl ElementControllerGen2<BpmnDomain> for BpmnPoolView {
                     EventHandlingStatus::NotHandled
                 }
             }
-            _ => {
-                let k_status = self
-                    .swimlane_views
-                    .iter()
-                    .map(|e| {
-                        let mut w = e.write();
-                        (
-                            *w.uuid,
-                            w.handle_event(event, ehc, settings, q, tool, commands),
-                        )
-                    })
-                    .find(|e| e.1 != EventHandlingStatus::NotHandled);
-                k_status
-                    .map(|e| e.1)
-                    .unwrap_or(EventHandlingStatus::NotHandled)
-            }
+            _ => k_status
+                .map(|e| e.1)
+                .unwrap_or(EventHandlingStatus::NotHandled),
         }
     }
 

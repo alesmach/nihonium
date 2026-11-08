@@ -637,15 +637,6 @@ pub enum BpmnAssociableElement {
     Subprocess(ERef<BpmnSubprocess>),
 }
 
-impl BpmnAssociableElement {
-    pub fn to_element(self) -> BpmnElement {
-        match self {
-            BpmnAssociableElement::Task(inner) => inner.into(),
-            BpmnAssociableElement::Subprocess(inner) => inner.into(),
-        }
-    }
-}
-
 #[derive(Clone, derive_more::From, nh_derive::Model, nh_derive::NHContextSerDeTag)]
 #[model(default_passthrough = "eref")]
 #[nh_context_serde(uuid_type = ModelUuid)]
