@@ -556,7 +556,7 @@ impl DiagramAdapter<DemoPsdDomain> for DemoPsdDiagramAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

@@ -649,7 +649,7 @@ impl<P: UmlClassProfile> DiagramAdapter<UmlClassDomain<P>> for UmlClassDiagramAd
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }
@@ -8581,9 +8581,11 @@ impl<P: UmlClassProfile> MulticonnectionAdapter<UmlClassDomain<P>>
             ));
         }
 
-        ui.label("Generalization set name:");
         if ui
-            .text_edit_singleline(&mut self.temporaries.set_name_buffer)
+            .labeled_text_edit_singleline(
+                "Generalization set name:",
+                &mut self.temporaries.set_name_buffer,
+            )
             .changed()
         {
             commands.push(InsensitiveCommand::PropertyChange(

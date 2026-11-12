@@ -320,36 +320,28 @@ impl DiagramAdapter<NetworkDomain> for NetworkDiagramAdapter {
         match e {
             NetworkElement::Container(inner) => format!(
                 "Container ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().name)
+                LabelProvider::sanitize(&inner.read().name)
             )
             .into(),
-            NetworkElement::Node(inner) => format!(
-                "Node ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().name)
-            )
-            .into(),
-            NetworkElement::User(inner) => format!(
-                "User ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().name)
-            )
-            .into(),
-            NetworkElement::File(inner) => format!(
-                "File ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().name)
-            )
-            .into(),
-            NetworkElement::Location(inner) => format!(
-                "Location ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().name)
-            )
-            .into(),
+            NetworkElement::Node(inner) => {
+                format!("Node ({})", LabelProvider::sanitize(&inner.read().name)).into()
+            }
+            NetworkElement::User(inner) => {
+                format!("User ({})", LabelProvider::sanitize(&inner.read().name)).into()
+            }
+            NetworkElement::File(inner) => {
+                format!("File ({})", LabelProvider::sanitize(&inner.read().name)).into()
+            }
+            NetworkElement::Location(inner) => {
+                format!("Location ({})", LabelProvider::sanitize(&inner.read().name)).into()
+            }
             NetworkElement::Association(_inner) => "Association".to_owned().into(),
             NetworkElement::Note(inner) => {
                 let r = inner.read();
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

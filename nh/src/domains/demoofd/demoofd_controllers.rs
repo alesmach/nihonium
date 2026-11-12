@@ -439,14 +439,19 @@ impl DiagramAdapter<DemoOfdDomain> for DemoOfdDiagramAdapter {
     }
     fn label_for(&self, e: &DemoOfdElement) -> Arc<String> {
         match e {
-            DemoOfdElement::Package(inner) => Arc::new(format!("Package ({})", inner.read().name)),
-            DemoOfdElement::EntityType(inner) => {
-                Arc::new(format!("Entity ({})", inner.read().name))
-            }
+            DemoOfdElement::Package(inner) => Arc::new(format!(
+                "Package ({})",
+                LabelProvider::sanitize(&inner.read().name)
+            )),
+            DemoOfdElement::EntityType(inner) => Arc::new(format!(
+                "Entity ({})",
+                LabelProvider::sanitize(&inner.read().name)
+            )),
             DemoOfdElement::EventType(inner) => Arc::new(format!("Event ({})", inner.read().name)),
-            DemoOfdElement::PropertyType(inner) => {
-                Arc::new(format!("Property ({})", inner.read().name))
-            }
+            DemoOfdElement::PropertyType(inner) => Arc::new(format!(
+                "Property ({})",
+                LabelProvider::sanitize(&inner.read().name)
+            )),
             DemoOfdElement::Specialization(_inner) => Arc::new("Specialization".to_owned()),
             DemoOfdElement::Aggregation(_inner) => Arc::new("Aggregation".to_owned()),
             DemoOfdElement::Precedence(_inner) => Arc::new("Precedence".to_owned()),
@@ -456,7 +461,7 @@ impl DiagramAdapter<DemoOfdDomain> for DemoOfdDiagramAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

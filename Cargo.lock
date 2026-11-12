@@ -3116,6 +3116,7 @@ dependencies = [
  "getrandom 0.4.3",
  "image",
  "inventory",
+ "itertools 0.15.0",
  "lalrpop",
  "lalrpop-util",
  "nh-derive",

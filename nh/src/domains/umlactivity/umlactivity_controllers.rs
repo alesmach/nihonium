@@ -421,7 +421,7 @@ impl DiagramAdapter<UmlActivityDomain> for UmlActivityDiagramAdapter {
             UmlActivityElement::PartitionSection(inner) => {
                 let r = inner.read();
                 let mut s = "Partition Section (".to_owned();
-                s.push_str(&r.name);
+                s.push_str(&LabelProvider::sanitize(&r.name));
                 if !r.stereotype.is_empty() {
                     s.push('«');
                     s.push_str(&r.stereotype);
@@ -433,7 +433,7 @@ impl DiagramAdapter<UmlActivityDomain> for UmlActivityDiagramAdapter {
             UmlActivityElement::ActionNode(inner) => {
                 let r = inner.read();
                 let mut s = "Action Node (".to_owned();
-                s.push_str(&LabelProvider::filter_and_elipsis(&r.name));
+                s.push_str(&LabelProvider::sanitize(&r.name));
                 if !r.stereotype.is_empty() {
                     s.push('«');
                     s.push_str(&r.stereotype);
@@ -451,10 +451,7 @@ impl DiagramAdapter<UmlActivityDomain> for UmlActivityDiagramAdapter {
                 let s = if r.name.is_empty() {
                     "Decision/Merge Node".to_owned()
                 } else {
-                    format!(
-                        "Decision/Merge Node ({})",
-                        LabelProvider::filter_and_elipsis(&r.name)
-                    )
+                    format!("Decision/Merge Node ({})", LabelProvider::sanitize(&r.name))
                 };
                 Arc::new(s)
             }
@@ -462,7 +459,7 @@ impl DiagramAdapter<UmlActivityDomain> for UmlActivityDiagramAdapter {
             UmlActivityElement::ObjectNode(inner) => {
                 let r = inner.read();
                 let mut s = "Object Node (".to_owned();
-                s.push_str(&LabelProvider::filter_and_elipsis(&r.name));
+                s.push_str(&LabelProvider::sanitize(&r.name));
                 if !r.stereotype.is_empty() {
                     s.push('«');
                     s.push_str(&r.stereotype);
@@ -488,7 +485,7 @@ impl DiagramAdapter<UmlActivityDomain> for UmlActivityDiagramAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

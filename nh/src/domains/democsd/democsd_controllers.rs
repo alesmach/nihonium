@@ -351,15 +351,23 @@ impl DiagramAdapter<DemoCsdDomain> for DemoCsdDiagramAdapter {
         match e {
             DemoCsdElement::Package(inner) => {
                 let r = inner.read();
-                Arc::new(format!("Package ({})", r.name))
+                Arc::new(format!("Package ({})", LabelProvider::sanitize(&r.name),))
             }
             DemoCsdElement::Transactor(inner) => {
                 let r = inner.read();
-                Arc::new(format!("Transactor {} ({})", r.identifier, r.name))
+                Arc::new(format!(
+                    "Transactor {} ({})",
+                    r.identifier,
+                    LabelProvider::sanitize(&r.name)
+                ))
             }
             DemoCsdElement::Transaction(inner) => {
                 let r = inner.read();
-                Arc::new(format!("Transaction {} ({})", r.identifier, r.name))
+                Arc::new(format!(
+                    "Transaction {} ({})",
+                    r.identifier,
+                    LabelProvider::sanitize(&r.name),
+                ))
             }
             DemoCsdElement::Link(inner) => Arc::new(inner.read().link_type.as_str().to_owned()),
             DemoCsdElement::Note(inner) => {
@@ -367,7 +375,7 @@ impl DiagramAdapter<DemoCsdDomain> for DemoCsdDiagramAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

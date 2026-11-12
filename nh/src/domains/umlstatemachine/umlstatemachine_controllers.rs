@@ -401,7 +401,7 @@ impl DiagramAdapter<UmlStateMachineDomain> for UmlStateMachineDiagramAdapter {
                     false => "Composite State (".to_owned(),
                     true => "Simple State (".to_owned(),
                 };
-                s.push_str(&r.name);
+                s.push_str(&LabelProvider::sanitize(&r.name));
                 if !r.stereotype.is_empty() {
                     s.push('«');
                     s.push_str(&r.stereotype);
@@ -440,7 +440,7 @@ impl DiagramAdapter<UmlStateMachineDomain> for UmlStateMachineDiagramAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }
@@ -5169,20 +5169,6 @@ impl UmlStateMachineInternalTransitionView {
             }
             if ui.button("Add sibling down").clicked() {
                 add_sibling = Some(UmlStateMachineOrdinalMovement::Down);
-            }
-        });
-        ui.horizontal(|ui| {
-            if ui.button("Move up").clicked() {
-                commands.push(InsensitiveCommand::MoveOrdinal(
-                    std::iter::once(*self.uuid).collect(),
-                    UmlStateMachineOrdinalMovement::Up,
-                ));
-            }
-            if ui.button("Move down").clicked() {
-                commands.push(InsensitiveCommand::MoveOrdinal(
-                    std::iter::once(*self.uuid).collect(),
-                    UmlStateMachineOrdinalMovement::Down,
-                ));
             }
         });
 

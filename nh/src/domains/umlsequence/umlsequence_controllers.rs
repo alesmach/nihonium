@@ -765,7 +765,9 @@ impl DiagramAdapter<UmlSequenceDomain> for UmlSequenceDiagramBoardAdapter {
     }
     fn label_for(&self, e: &UmlSequenceElement) -> Arc<String> {
         match e {
-            UmlSequenceElement::Diagram(inner) => inner.read().name.clone(),
+            UmlSequenceElement::Diagram(inner) => {
+                format!("Diagram ({})", LabelProvider::sanitize(&inner.read().name),).into()
+            }
             UmlSequenceElement::CombinedFragment(inner) => {
                 let r = inner.read();
                 Arc::new(combined_fragment_display_text(r.kind, &r.kind_argument))
@@ -779,7 +781,9 @@ impl DiagramAdapter<UmlSequenceDomain> for UmlSequenceDiagramBoardAdapter {
                 };
                 Arc::new(s)
             }
-            UmlSequenceElement::Lifeline(inner) => inner.read().name.clone(),
+            UmlSequenceElement::Lifeline(inner) => {
+                format!("Lifeline ({})", LabelProvider::sanitize(&inner.read().name),).into()
+            }
             UmlSequenceElement::Message(inner) => {
                 let r = inner.read();
                 let s = if r.name.is_empty() {
@@ -794,7 +798,7 @@ impl DiagramAdapter<UmlSequenceDomain> for UmlSequenceDiagramBoardAdapter {
                 let s = if r.text.is_empty() {
                     "Ref".to_owned()
                 } else {
-                    format!("Ref ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Ref ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }
@@ -803,10 +807,7 @@ impl DiagramAdapter<UmlSequenceDomain> for UmlSequenceDiagramBoardAdapter {
                 let s = if r.text.is_empty() {
                     "Duration Constraint".to_owned()
                 } else {
-                    format!(
-                        "Duration Constraint ({})",
-                        LabelProvider::filter_and_elipsis(&r.text)
-                    )
+                    format!("Duration Constraint ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }
@@ -815,7 +816,7 @@ impl DiagramAdapter<UmlSequenceDomain> for UmlSequenceDiagramBoardAdapter {
                 let s = if r.text.is_empty() {
                     "Note".to_owned()
                 } else {
-                    format!("Note ({})", LabelProvider::filter_and_elipsis(&r.text))
+                    format!("Note ({})", LabelProvider::sanitize(&r.text))
                 };
                 Arc::new(s)
             }

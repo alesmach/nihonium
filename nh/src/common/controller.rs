@@ -19,6 +19,7 @@ use crate::{CustomModal, CustomTab, NHTab};
 use eframe::egui;
 use egui_ltreeview::DirPosition;
 use fluent_bundle::FluentMessage;
+use itertools::Itertools;
 use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -777,12 +778,16 @@ pub struct LabelProvider {
 }
 
 impl LabelProvider {
-    /// Clips string to reasonable size, replacing whitespaces with space
-    pub fn filter_and_elipsis(src: &str) -> String {
+    /// "Sanitizes" user-input string for display by
+    /// 1) replacing all whitespaces by a standard space
+    /// 2) removing consecutive spaces
+    /// 3) clipping the string to a reasonable size
+    pub fn sanitize(src: &str) -> String {
         const CUTOFF: usize = 40;
         let mut s: String = src
             .chars()
             .map(|c| if c.is_whitespace() { ' ' } else { c })
+            .dedup_by(|a, b| *a == ' ' && *b == ' ')
             .take(CUTOFF)
             .collect();
         if src.len() > CUTOFF {

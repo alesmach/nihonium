@@ -400,7 +400,12 @@ impl DiagramAdapter<BpmnDomain> for BpmnDiagramAdapter {
         match e {
             BpmnElement::Task(inner) => {
                 let r = inner.read();
-                format!("{} Task ({})", r.kind.as_str(), r.name).into()
+                format!(
+                    "{} Task ({})",
+                    r.kind.as_str(),
+                    LabelProvider::sanitize(&r.name),
+                )
+                .into()
             }
             BpmnElement::Subprocess(inner) => {
                 let r = inner.read();
@@ -453,7 +458,7 @@ impl DiagramAdapter<BpmnDomain> for BpmnDiagramAdapter {
             BpmnElement::Association(_inner) => format!("Association").into(),
             BpmnElement::Annotation(inner) => format!(
                 "Annotation ({})",
-                LabelProvider::filter_and_elipsis(&inner.read().text)
+                LabelProvider::sanitize(&inner.read().text)
             )
             .into(),
         }

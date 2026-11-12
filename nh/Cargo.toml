@@ -19,6 +19,7 @@ eframe = { version = "0.36", features = ["persistence"] }
 egui_extras = { version = "0.36", features = ["serde", "image", "svg", "svg_text"] }
 image = { version = "0.25", features = ["jpeg", "png"] }
 resvg = "0.48"
+itertools = "0.15.0"
 egui_dock = { version = "0.21", features = ["serde"] }
 egui_ltreeview = "0.9"
 rfd = "0.17"
